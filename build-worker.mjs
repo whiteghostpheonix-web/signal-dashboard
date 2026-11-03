@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-const distDir = './public';
+const distDir = './dist';
 const files = {};
 
 function walk(dir, prefix = '') {
@@ -43,7 +43,7 @@ const output = [
   'export default {',
   '  async fetch(request, env) {',
   '    const url = new URL(request.url);',
-  "    let pathname = url.pathname === '/' ? '/index.html' : url.pathname;",
+  "    let pathname = url.pathname === '/' || url.pathname === '/super-admin' || url.pathname === '/super-admin/' ? '/index.html' : url.pathname;",
   '',
   '    if (STATIC[pathname]) {',
   '      return new Response(decode(STATIC[pathname]), {',
@@ -64,4 +64,4 @@ const output = [
 ].join('\n');
 
 fs.writeFileSync('./src/worker.js', output);
-console.log('✅ Built worker.js with ' + Object.keys(files).length + ' static files (no proxy)');
+console.log('Built signal-admin Worker bundle with ' + Object.keys(files).length + ' static files.');
