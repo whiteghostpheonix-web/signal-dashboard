@@ -112,8 +112,8 @@ export default function AdminAuth({ children }) {
 
   if (!admin) {
     return (
-      <main className="app admin-login-page">
-        <section className="card admin-login-card">
+      <main className="app" style={{ maxWidth: 460, margin: '48px auto', padding: 20 }}>
+        <section className="card" style={{ padding: 24 }}>
           <h1>Signal Electronics — Admin</h1>
           <p>Sign in with an authorized admin email. We’ll send you a one-time code.</p>
           {error && <div className="error" role="alert">{error}</div>}
@@ -141,20 +141,18 @@ export default function AdminAuth({ children }) {
 
   return (
     <>
-      <div className="admin-session-bar">
-        <span className="admin-session-email" title={admin.email}>{admin.email}</span>
-        <div className="admin-session-actions">
-          <button className="btn btn-sm" onClick={async () => {
-            setError('');
-            try { await loadAdmins(); setShowAdmins((open) => !open); } catch (e) { setError(e.message); }
-          }}>Manage admins</button>
-          <button className="btn btn-sm" onClick={logout}>Sign out</button>
-        </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, padding: '8px 20px' }}>
+        <span>{admin.email}</span>
+        <button className="btn btn-sm" onClick={async () => {
+          setError('');
+          try { await loadAdmins(); setShowAdmins((open) => !open); } catch (e) { setError(e.message); }
+        }}>Manage admins</button>
+        <button className="btn btn-sm" onClick={logout}>Sign out</button>
       </div>
-      {error && <div className="error admin-auth-message" role="alert">{error}</div>}
-      {message && <div role="status" className="admin-auth-message">{message}</div>}
+      {error && <div className="error" role="alert" style={{ margin: '0 20px' }}>{error}</div>}
+      {message && <div role="status" style={{ margin: '0 20px' }}>{message}</div>}
       {showAdmins && (
-        <section className="card admin-users-panel">
+        <section className="card" style={{ margin: '12px 20px', padding: 20 }}>
           <h2>Authorized admins</h2>
           <form onSubmit={addAdmin} className="form-grid">
             <label className="field"><span>Name</span><input value={newAdminName} onChange={(e) => setNewAdminName(e.target.value)} /></label>

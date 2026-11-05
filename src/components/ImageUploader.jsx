@@ -113,8 +113,7 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
     const otherCamera = cameras.find(camera => camera.deviceId !== cameraId && facingFor(camera, facingMode) !== facingMode)
       || cameras.find(camera => camera.deviceId !== cameraId);
     if (otherCamera) {
-      const facing = facingFor(otherCamera, facingMode === 'user' ? 'environment' : 'user');
-      startCamera({ deviceId: otherCamera.deviceId, facing });
+      startCamera({ deviceId: otherCamera.deviceId, facing: facingFor(otherCamera, facingMode === 'user' ? 'environment' : 'user') });
       return;
     }
     startCamera({ facing: facingMode === 'user' ? 'environment' : 'user', enumerate: true });
@@ -144,16 +143,12 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
       </header>
       <div className="camera-options">
         {cameras.length > 1 && <span className="camera-active-name">{cameraName(cameras.find(camera => camera.deviceId === cameraId) || cameras[0], cameras.findIndex(camera => camera.deviceId === cameraId))}</span>}
-        <button type="button" className="camera-flip-button" onClick={changeCamera} disabled={cameraBusy}>
-          ⇄ <span>Change camera</span>
-        </button>
+        <button type="button" className="camera-flip-button" onClick={changeCamera} disabled={cameraBusy}>⇄ <span>Change camera</span></button>
       </div>
       {cameraError && <p className="camera-fullscreen-error" role="alert">{cameraError}</p>}
       <footer className="camera-bottom-bar">
         <button type="button" className="camera-cancel-button" onClick={closeCamera}>Cancel</button>
-        <button type="button" className="camera-capture-button" onClick={capturePhoto} disabled={cameraBusy} aria-label="Capture photo">
-          <span />
-        </button>
+        <button type="button" className="camera-capture-button" onClick={capturePhoto} disabled={cameraBusy} aria-label="Capture photo"><span /></button>
         <div className="camera-bottom-spacer" aria-hidden="true" />
       </footer>
     </div>,
@@ -170,9 +165,7 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
 
   return (
     <div className="image-uploader">
-      {value ? <img className="image-preview" src={value} alt={label} /> : (
-        <div className="image-placeholder">📷<br />No {label.toLowerCase()} photo yet</div>
-      )}
+      {value ? <img className="image-preview" src={value} alt={label} /> : <div className="image-placeholder">📷<br />No {label.toLowerCase()} photo yet</div>}
       {cameraError && !cameraOpen && <p className="camera-error" role="status">{cameraError}</p>}
       <div className="image-uploader-actions">
         <button type="button" className="btn btn-primary" onClick={openCamera} disabled={cameraBusy}>
