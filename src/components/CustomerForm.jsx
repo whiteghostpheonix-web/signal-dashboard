@@ -66,6 +66,8 @@ export function CustomerForm({ imei, onClose, onSuccess, toast }) {
         id_front_base64: customer.id_front_base64, id_back_base64: customer.id_back_base64,
       }) });
       for (const guarantor of guarantors) {
+        // Do not create empty guarantor rows in D1 when the optional fields are unused.
+        if (![guarantor.full_name, guarantor.phone, guarantor.relationship].some(value => String(value || '').trim())) continue;
         await api(`/api/customers/${encodeURIComponent(imei)}/guarantors`, {
           method: 'POST',
           body: JSON.stringify({
