@@ -1,7 +1,9 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const distDir = './public';
+// Vite writes the production app to dist/. Embed those exact build outputs in
+// the Worker so `npm run deploy` cannot publish an older bundle from public/.
+const distDir = './dist';
 const files = {};
 
 function walk(dir, prefix = '') {
@@ -16,6 +18,9 @@ function walk(dir, prefix = '') {
   }
 }
 
+if (!fs.existsSync(distDir)) {
+  throw new Error('Vite output not found at ./dist. Run npm run build first.');
+}
 walk(distDir);
 
 const output = [
@@ -37,13 +42,16 @@ const output = [
   "  if (p.endsWith('.json')) return 'application/json';",
   "  if (p.endsWith('.png')) return 'image/png';",
   "  if (p.endsWith('.ico')) return 'image/x-icon';",
+  "  if (p.endsWith('.webp')) return 'image/webp';",
+  "  if (p.endsWith('.jpg') || p.endsWith('.jpeg')) return 'image/jpeg';",
+  "  if (p.endsWith('.woff2')) return 'font/woff2';",
   "  return 'application/octet-stream';",
   '}',
   '',
   'export default {',
-  '  async fetch(request, env) {',
+  '  async fetch(request) {',
   '    const url = new URL(request.url);',
-  "    let pathname = url.pathname === '/' ? '/index.html' : url.pathname;",
+  "    const pathname = url.pathname === '/' ? '/index.html' : url.pathname;",
   '',
   '    if (STATIC[pathname]) {',
   '      return new Response(decode(STATIC[pathname]), {',
@@ -64,4 +72,4 @@ const output = [
 ].join('\n');
 
 fs.writeFileSync('./src/worker.js', output);
-console.log('✅ Built worker.js with ' + Object.keys(files).length + ' static files (no proxy)');
+console.log('✅ Built worker.js from Vite dist with ' + Object.keys(files).length + ' static files');
