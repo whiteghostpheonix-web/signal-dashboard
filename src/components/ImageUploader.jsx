@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 const MAX_IMAGE_EDGE = 1440;
 const JPEG_QUALITY = 0.82;
@@ -19,6 +20,12 @@ function cameraName(device, index) {
   if (/front|user|selfie/i.test(label)) return `Front camera${label ? ` — ${label}` : ''}`;
   if (/back|rear|environment/i.test(label)) return `Rear camera${label ? ` — ${label}` : ''}`;
   return label || `Camera ${index + 1}`;
+}
+
+function facingFor(device, fallback = 'environment') {
+  if (/front|user|selfie/i.test(device?.label || '')) return 'user';
+  if (/back|rear|environment/i.test(device?.label || '')) return 'environment';
+  return fallback;
 }
 
 export function ImageUploader({ value, onChange, label = 'Photo' }) {
@@ -72,13 +79,14 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
       streamRef.current = stream;
       const activeTrack = stream.getVideoTracks()[0];
       const settings = activeTrack?.getSettings?.() || {};
-      if (settings.deviceId) setCameraId(settings.deviceId);
+      const activeCameraId = settings.deviceId || deviceId;
+      if (activeCameraId) setCameraId(activeCameraId);
+      setFacingMode(facing);
       if (enumerate && navigator.mediaDevices.enumerateDevices) {
         const available = (await navigator.mediaDevices.enumerateDevices()).filter(device => device.kind === 'videoinput');
         setCameras(available);
-        if (settings.deviceId) setCameraId(settings.deviceId);
+        if (activeCameraId) setCameraId(activeCameraId);
       }
-      setFacingMode(facing);
       setCameraOpen(true);
       requestAnimationFrame(() => {
         if (videoRef.current) {
@@ -101,12 +109,23 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
     await startCamera({ facing: 'environment', enumerate: true });
   }
 
-  function switchCamera(event) {
-    const nextId = event.target.value;
+  function selectCamera(nextId) {
     const selected = cameras.find(camera => camera.deviceId === nextId);
-    const nextFacing = /front|user|selfie/i.test(selected?.label || '') ? 'user' : 'environment';
     setCameraId(nextId);
-    startCamera({ deviceId: nextId, facing: nextFacing });
+    startCamera({ deviceId: nextId, facing: facingFor(selected, facingMode) });
+  }
+
+  function switchFacing() {
+    if (cameras.length > 1) {
+      const next = cameras.find(camera => camera.deviceId !== cameraId && facingFor(camera, facingMode) !== facingMode)
+        || cameras.find(camera => camera.deviceId !== cameraId);
+      if (next) {
+        selectCamera(next.deviceId);
+        return;
+      }
+    }
+    const nextFacing = facingMode === 'user' ? 'environment' : 'user';
+    startCamera({ facing: nextFacing, enumerate: true });
   }
 
   function capturePhoto() {
@@ -124,41 +143,53 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
     }
   }
 
+  const cameraView = cameraOpen && typeof document !== 'undefined' ? createPortal(
+    <div className="camera-fullscreen" role="dialog" aria-modal="true" aria-label={`${label} camera`}>
+      <video ref={videoRef} className="camera-fullscreen-preview" autoPlay muted playsInline aria-label={`${label} live camera preview`} />
+      <header className="camera-topbar">
+        <div className="camera-title">Capture {label.toLowerCase()}</div>
+        <button type="button" className="camera-icon-button" onClick={closeCamera} aria-label="Close camera">×</button>
+      </header>
+      <div className="camera-options">
+        {cameras.length > 1 && (
+          <label className="camera-option-select">
+            <span>Camera</span>
+            <select value={cameraId} onChange={event => selectCamera(event.target.value)} disabled={cameraBusy}>
+              {cameras.map((camera, index) => (
+                <option key={camera.deviceId} value={camera.deviceId}>{cameraName(camera, index)}</option>
+              ))}
+            </select>
+          </label>
+        )}
+        <button type="button" className="camera-flip-button" onClick={switchFacing} disabled={cameraBusy}>
+          ⇄ <span>Switch camera</span>
+        </button>
+      </div>
+      {cameraError && <p className="camera-fullscreen-error" role="alert">{cameraError}</p>}
+      <footer className="camera-bottom-bar">
+        <button type="button" className="camera-cancel-button" onClick={closeCamera}>Cancel</button>
+        <button type="button" className="camera-capture-button" onClick={capturePhoto} disabled={cameraBusy} aria-label="Capture photo">
+          <span />
+        </button>
+        <div className="camera-bottom-spacer" aria-hidden="true" />
+      </footer>
+    </div>,
+    document.body,
+  ) : null;
+
   return (
     <div className="image-uploader">
-      {cameraOpen ? (
-        <div className="camera-panel">
-          <video ref={videoRef} className="camera-preview" autoPlay muted playsInline aria-label={`${label} live camera preview`} />
-          {cameras.length > 1 && (
-            <label className="field camera-select">
-              <span>Choose camera</span>
-              <select value={cameraId} onChange={switchCamera} disabled={cameraBusy}>
-                {cameras.map((camera, index) => (
-                  <option key={camera.deviceId} value={camera.deviceId}>{cameraName(camera, index)}</option>
-                ))}
-              </select>
-            </label>
-          )}
-          {cameras.length <= 1 && <small className="camera-hint">Using the {facingMode === 'user' ? 'front' : 'rear'} camera when available.</small>}
-          <div className="camera-actions">
-            <button type="button" className="btn btn-primary" onClick={capturePhoto} disabled={cameraBusy}>Capture photo</button>
-            <button type="button" className="btn" onClick={closeCamera}>Cancel camera</button>
-          </div>
-        </div>
-      ) : value ? (
-        <img className="image-preview" src={value} alt={label} />
-      ) : (
+      {value ? <img className="image-preview" src={value} alt={label} /> : (
         <div className="image-placeholder">📷<br />No {label.toLowerCase()} photo yet</div>
       )}
-      {cameraError && <p className="camera-error" role="status">{cameraError}</p>}
-      {!cameraOpen && (
-        <div className="image-uploader-actions">
-          <button type="button" className="btn btn-primary" onClick={openCamera} disabled={cameraBusy}>
-            {cameraBusy ? 'Opening camera…' : value ? 'Retake with camera' : 'Open live camera'}
-          </button>
-          {value && <button type="button" className="btn btn-sm" onClick={() => onChange(null)}>Remove photo</button>}
-        </div>
-      )}
+      {cameraError && !cameraOpen && <p className="camera-error" role="status">{cameraError}</p>}
+      <div className="image-uploader-actions">
+        <button type="button" className="btn btn-primary" onClick={openCamera} disabled={cameraBusy}>
+          {cameraBusy ? 'Opening camera…' : value ? 'Retake with camera' : 'Open live camera'}
+        </button>
+        {value && <button type="button" className="btn btn-sm" onClick={() => onChange(null)}>Remove photo</button>}
+      </div>
+      {cameraView}
     </div>
   );
 }
