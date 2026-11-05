@@ -32,6 +32,7 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [imageOpen, setImageOpen] = useState(false);
   const [cameraError, setCameraError] = useState('');
   const [cameraBusy, setCameraBusy] = useState(false);
   const [cameras, setCameras] = useState([]);
@@ -77,15 +78,14 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
         });
       }
       streamRef.current = stream;
-      const activeTrack = stream.getVideoTracks()[0];
-      const settings = activeTrack?.getSettings?.() || {};
-      const activeCameraId = settings.deviceId || deviceId;
-      if (activeCameraId) setCameraId(activeCameraId);
+      const settings = stream.getVideoTracks()[0]?.getSettings?.() || {};
+      const activeId = settings.deviceId || deviceId;
+      if (activeId) setCameraId(activeId);
       setFacingMode(facing);
       if (enumerate && navigator.mediaDevices.enumerateDevices) {
         const available = (await navigator.mediaDevices.enumerateDevices()).filter(device => device.kind === 'videoinput');
         setCameras(available);
-        if (activeCameraId) setCameraId(activeCameraId);
+        if (activeId) setCameraId(activeId);
       }
       setCameraOpen(true);
       requestAnimationFrame(() => {
@@ -97,7 +97,7 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
     } catch (error) {
       setCameraError(error?.name === 'NotAllowedError'
         ? 'Camera permission was denied. Allow camera access in your browser settings, then try again.'
-        : 'Could not open that camera. Check browser permissions and try the other camera.');
+        : 'Could not open that camera. Check browser permissions and try again.');
     } finally {
       setCameraBusy(false);
     }
@@ -109,23 +109,15 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
     await startCamera({ facing: 'environment', enumerate: true });
   }
 
-  function selectCamera(nextId) {
-    const selected = cameras.find(camera => camera.deviceId === nextId);
-    setCameraId(nextId);
-    startCamera({ deviceId: nextId, facing: facingFor(selected, facingMode) });
-  }
-
-  function switchFacing() {
-    if (cameras.length > 1) {
-      const next = cameras.find(camera => camera.deviceId !== cameraId && facingFor(camera, facingMode) !== facingMode)
-        || cameras.find(camera => camera.deviceId !== cameraId);
-      if (next) {
-        selectCamera(next.deviceId);
-        return;
-      }
+  function changeCamera() {
+    const otherCamera = cameras.find(camera => camera.deviceId !== cameraId && facingFor(camera, facingMode) !== facingMode)
+      || cameras.find(camera => camera.deviceId !== cameraId);
+    if (otherCamera) {
+      const facing = facingFor(otherCamera, facingMode === 'user' ? 'environment' : 'user');
+      startCamera({ deviceId: otherCamera.deviceId, facing });
+      return;
     }
-    const nextFacing = facingMode === 'user' ? 'environment' : 'user';
-    startCamera({ facing: nextFacing, enumerate: true });
+    startCamera({ facing: facingMode === 'user' ? 'environment' : 'user', enumerate: true });
   }
 
   function capturePhoto() {
@@ -151,18 +143,9 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
         <button type="button" className="camera-icon-button" onClick={closeCamera} aria-label="Close camera">×</button>
       </header>
       <div className="camera-options">
-        {cameras.length > 1 && (
-          <label className="camera-option-select">
-            <span>Camera</span>
-            <select value={cameraId} onChange={event => selectCamera(event.target.value)} disabled={cameraBusy}>
-              {cameras.map((camera, index) => (
-                <option key={camera.deviceId} value={camera.deviceId}>{cameraName(camera, index)}</option>
-              ))}
-            </select>
-          </label>
-        )}
-        <button type="button" className="camera-flip-button" onClick={switchFacing} disabled={cameraBusy}>
-          ⇄ <span>Switch camera</span>
+        {cameras.length > 1 && <span className="camera-active-name">{cameraName(cameras.find(camera => camera.deviceId === cameraId) || cameras[0], cameras.findIndex(camera => camera.deviceId === cameraId))}</span>}
+        <button type="button" className="camera-flip-button" onClick={changeCamera} disabled={cameraBusy}>
+          ⇄ <span>Change camera</span>
         </button>
       </div>
       {cameraError && <p className="camera-fullscreen-error" role="alert">{cameraError}</p>}
@@ -177,6 +160,14 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
     document.body,
   ) : null;
 
+  const imageView = imageOpen && value && typeof document !== 'undefined' ? createPortal(
+    <div className="captured-image-fullscreen" role="dialog" aria-modal="true" aria-label={`${label} captured image`} onClick={() => setImageOpen(false)}>
+      <button type="button" className="camera-icon-button captured-image-close" onClick={() => setImageOpen(false)} aria-label="Close image preview">×</button>
+      <img src={value} alt={`${label} captured preview`} />
+    </div>,
+    document.body,
+  ) : null;
+
   return (
     <div className="image-uploader">
       {value ? <img className="image-preview" src={value} alt={label} /> : (
@@ -187,9 +178,13 @@ export function ImageUploader({ value, onChange, label = 'Photo' }) {
         <button type="button" className="btn btn-primary" onClick={openCamera} disabled={cameraBusy}>
           {cameraBusy ? 'Opening camera…' : value ? 'Retake with camera' : 'Open live camera'}
         </button>
-        {value && <button type="button" className="btn btn-sm" onClick={() => onChange(null)}>Remove photo</button>}
+        {value && <>
+          <button type="button" className="btn" onClick={() => setImageOpen(true)}>View image</button>
+          <button type="button" className="btn btn-sm" onClick={() => { onChange(null); setImageOpen(false); }}>Remove image</button>
+        </>}
       </div>
       {cameraView}
+      {imageView}
     </div>
   );
 }
