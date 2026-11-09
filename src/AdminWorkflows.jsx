@@ -19,7 +19,7 @@ export default function AdminWorkflows({ view, toast = () => {} }) {
     } catch (error) {
       toast('Could not load ' + view + ': ' + error.message, 'error');
     } finally { setBusy(false); }
-  }, [endpoint, key, toast, view]);
+  }, [endpoint, key, view]);
 
   useEffect(() => { load(); }, [load]);
 
