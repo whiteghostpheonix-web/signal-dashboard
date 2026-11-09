@@ -143,10 +143,10 @@ export default function AdminAuth({ children }) {
     <>
       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, padding: '8px 20px' }}>
         <span>{admin.email}</span>
-        <button className="btn btn-sm" onClick={async () => {
+        {admin.role === "super_admin" && <button className="btn btn-sm" onClick={async () => {
           setError('');
           try { await loadAdmins(); setShowAdmins((open) => !open); } catch (e) { setError(e.message); }
-        }}>Manage admins</button>
+        }}>Manage admins</button>}
         <button className="btn btn-sm" onClick={logout}>Sign out</button>
       </div>
       {error && <div className="error" role="alert" style={{ margin: '0 20px' }}>{error}</div>}
