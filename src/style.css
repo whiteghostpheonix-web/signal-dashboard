@@ -87,3 +87,38 @@ tr:last-child td { border-bottom: none; }
 .plan-preview table { min-width: auto; font-size: 13px; }
 .photo-thumbnail { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; margin: 2px; cursor: pointer; }
 .kyc-photos { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+
+/* Additive admin workflow tabs — existing dashboard styling remains unchanged. */
+.workflow-page { margin-top: 8px; }
+.workflow-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin: 8px 0 18px; }
+.workflow-heading h2 { margin: 0 0 6px; font-size: 21px; }
+.workflow-heading h3 { margin: 0 0 4px; }
+.workflow-eyebrow { margin: 0 0 5px; color: #0F62FE; font-size: 11px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; }
+.muted-workflow { color: #777; font-size: 13px; margin: 5px 0 12px; }
+.workflow-filters { margin-top: 12px; }
+.workflow-empty { padding: 34px 16px; text-align: center; color: #777; }
+.workflow-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.workflow-form { min-width: 0; }
+.workflow-form h3 { margin: 0 0 6px; }
+.workflow-form .btn-primary { min-height: 40px; }
+.workflow-check { display: flex; align-items: center; gap: 9px; margin: 8px 0 16px; font-size: 13px; }
+.workflow-check input { width: 18px; height: 18px; }
+.workflow-settings-list { margin-top: 22px; border-top: 1px solid #eee; padding-top: 14px; }
+.workflow-settings-list h4 { margin: 0 0 10px; }
+.workflow-settings-list button { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; width: 100%; padding: 10px; border: 1px solid #eee; border-radius: 8px; background: #fff; text-align: left; cursor: pointer; margin-bottom: 7px; }
+.workflow-settings-list button span { overflow-wrap: anywhere; font-size: 12px; }
+.workflow-settings-list button b { font-size: 12px; }
+.workflow-settings-list button small { grid-column: 1 / -1; color: #777; }
+.workflow-subheading { margin: 24px 0 12px; }
+.workflow-detail { max-width: 900px; }
+.workflow-detail .modal-header { align-items: center; }
+.workflow-detail .modal-header h2 { margin: 0 0 7px; }
+.workflow-detail .modal-body h3 { margin: 18px 0 8px; font-size: 14px; }
+.workflow-detail .modal-body p { font-size: 13px; margin: 7px 0; overflow-wrap: anywhere; }
+.workflow-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.workflow-detail pre { white-space: pre-wrap; overflow-wrap: anywhere; background: #f8f9fa; padding: 10px; border-radius: 7px; font: 12px/1.5 inherit; color: #444; }
+.workflow-media { display: flex; flex-wrap: wrap; gap: 12px; }
+.workflow-media a { width: 120px; color: #333; text-decoration: none; font-size: 11px; }
+.workflow-media img { width: 120px; height: 100px; display: block; object-fit: cover; border-radius: 7px; border: 1px solid #ddd; }
+.workflow-media span { display: block; padding-top: 4px; text-transform: capitalize; }
+@media (max-width: 760px) { .workflow-columns, .workflow-detail-grid { grid-template-columns: 1fr; } .workflow-heading { align-items: stretch; flex-direction: column; } .workflow-heading > .btn { align-self: flex-start; } }

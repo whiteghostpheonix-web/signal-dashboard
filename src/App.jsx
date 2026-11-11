@@ -9,6 +9,8 @@ import { QRCodeModal } from './components/QRCodeModal.jsx';
 import { Reports } from './components/Reports.jsx';
 import { ToastContainer } from './components/Toast.jsx';
 import { api } from './config.js';
+import AdminWorkflows from './AdminWorkflows.jsx';
+import RetailerManagement from './RetailerManagement.jsx';
 
 export default function App() {
   const [view, setView] = useState('devices');
@@ -85,9 +87,9 @@ export default function App() {
       </div>
 
       <nav className="tabs">
-        {['devices', 'plans', 'resellers', 'reports'].map(t => (
+        {['devices', 'plans', 'resellers', 'reports', 'applications', 'commissions', 'retailer-management'].map(t => (
           <button key={t} className={view === t ? 'tab active' : 'tab'} onClick={() => setView(t)}>
-            {t.charAt(0).toUpperCase() + t.slice(1)}
+            {{ applications: 'Customer Applications', commissions: 'Commissions', 'retailer-management': 'Retailer Management' }[t] || (t.charAt(0).toUpperCase() + t.slice(1))}
           </button>
         ))}
       </nav>
@@ -212,6 +214,8 @@ export default function App() {
       )}
 
       {view === 'reports' && <Reports toast={toast} />}
+      {(view === 'applications' || view === 'commissions') && <AdminWorkflows view={view} toast={toast} />}
+      {view === 'retailer-management' && <RetailerManagement toast={toast} />}
 
       {selected && <DeviceDetail imei={selected} onClose={() => { setSelected(null); load(); }} toast={toast} />}
       {showAddDevice && <AddDeviceForm onClose={() => setShowAddDevice(false)} onSuccess={load} toast={toast} />}
