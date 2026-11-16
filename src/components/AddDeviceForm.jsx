@@ -3,8 +3,8 @@ import { Modal } from './Modal.jsx';
 import { api } from '../config.js';
 import QRCode from 'qrcode';
 
-const APK_URL = 'https://device-finance-api.whiteghostpheonix.workers.dev/download/apk/signal-dpc-v0.2.4.apk';
-const APK_CHECKSUM = '59eAWEHMKwh8GIG2kYvDpNV/0Qh+WP4APL1w6OG8NrU=';
+const APK_URL = 'https://device-finance-api.whiteghostpheonix.workers.dev/download/apk/signal-dpc-v0.2.5.apk';
+const APK_CHECKSUM = 'pDhJVU3m0seE9HJjzySe7FCG8WL3wQe7k8g2Y00Vyqk=';
 const COMPONENT = 'ug.co.signalelectronics.devicefinance/.SignalDeviceAdminReceiver';
 const SERVER_URL = 'https://device-finance-api.whiteghostpheonix.workers.dev';
 
