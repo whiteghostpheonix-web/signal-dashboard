@@ -8,6 +8,7 @@ export function AssignPlanForm({ imei, onClose, onSuccess, toast }) {
   const [startDate, setStartDate] = useState(new Date().toISOString().slice(0, 10));
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   useEffect(() => { api('/api/plans').then(setPlans).catch(() => setPlans([])); }, []);
   useEffect(() => {
@@ -42,13 +43,21 @@ export function AssignPlanForm({ imei, onClose, onSuccess, toast }) {
           </select>
         </label>
 
-        <label className="field">
-          <span>Start Date</span>
-          <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required />
-        </label>
-
         {selectedPlan && (
-          <div className="plan-preview">
+          <div className="summary plan-selected-summary">
+            <strong>{selectedPlan.plan_name || 'Selected payment plan'}</strong>
+            <div>Total: UGX {Number(selectedPlan.total_amount_ugx || 0).toLocaleString()}</div>
+            <div>{selectedPlan.installment_count || selectedPlan.installments?.length || 0} scheduled payments · {selectedPlan.frequency || 'monthly'}</div>
+          </div>
+        )}
+
+        <button type="button" className="more-options-toggle" aria-expanded={showMore} onClick={() => setShowMore(v => !v)}>{showMore ? '− Hide more options' : '+ More options'}</button>
+        {showMore && <div className="more-options-panel">
+          <label className="field">
+            <span>Start Date</span>
+            <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required />
+          </label>
+          {selectedPlan && <div className="plan-preview">
             <h4 style={{marginTop: 0}}>Schedule Preview</h4>
             <table style={{fontSize: 13}}>
               <thead><tr><th>#</th><th>Days</th><th>Amount</th><th>Due Date</th><th>Label</th></tr></thead>
@@ -68,8 +77,8 @@ export function AssignPlanForm({ imei, onClose, onSuccess, toast }) {
                 })}
               </tbody>
             </table>
-          </div>
-        )}
+          </div>}
+        </div>}
 
         <div className="modal-actions">
           <button type="button" className="btn" onClick={onClose}>Cancel</button>

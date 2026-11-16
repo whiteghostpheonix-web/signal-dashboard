@@ -11,9 +11,12 @@ import { ToastContainer } from './components/Toast.jsx';
 import { api } from './config.js';
 import AdminWorkflows from './AdminWorkflows.jsx';
 import RetailerManagement from './RetailerManagement.jsx';
+import RetailerDirectory from './RetailerDirectory.jsx';
 
 export default function App() {
   const [view, setView] = useState('devices');
+  const [menuOpen, setMenuOpen] = useState(false);
+  function selectView(nextView) { setView(nextView); setMenuOpen(false); }
   const [summary, setSummary] = useState(null);
   const [devices, setDevices] = useState([]);
   const [plans, setPlans] = useState([]);
@@ -26,6 +29,7 @@ export default function App() {
   const [editPlanId, setEditPlanId] = useState(null);
   const [showResellerForm, setShowResellerForm] = useState(false);
   const [editResellerEmail, setEditResellerEmail] = useState(null);
+  const [focusRetailerEmail, setFocusRetailerEmail] = useState('');
   const [assignPlanDevice, setAssignPlanDevice] = useState(null);
   const [kycDevice, setKycDevice] = useState(null);
   const [qrDevice, setQrDevice] = useState(null);
@@ -38,13 +42,13 @@ export default function App() {
   }
   function removeToast(id) { setToasts(t => t.filter(x => x.id !== id)); }
 
-  async function load() {
-    setLoading(true);
+  async function load(showLoader = true) {
+    if (showLoader) setLoading(true);
     try {
       const [s, d] = await Promise.all([api('/api/dashboard/summary'), api('/api/dashboard/devices')]);
       setSummary(s); setDevices(Array.isArray(d) ? d : []);
     } catch (e) { toast('Failed to load: ' + e.message, 'error'); }
-    finally { setLoading(false); }
+    finally { if (showLoader) setLoading(false); }
   }
   async function loadPlans() { try { setPlans(await api('/api/plans') || []); } catch (_) {} }
   async function loadResellers() { try { setResellers(await api('/api/resellers') || []); } catch (_) {} }
@@ -78,7 +82,7 @@ export default function App() {
   return (
     <div className="app">
       <div className="header">
-        <h1>Signal Electronics — Admin</h1>
+        <div className="header-brand"><button type="button" className="menu-toggle" aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'} aria-expanded={menuOpen} onClick={() => setMenuOpen(v => !v)}>{menuOpen ? '×' : '☰'}</button><h1>Signal Electronics — Admin</h1></div>
         <div className="header-actions">
           <button className="btn btn-primary" onClick={() => setShowAddDevice(true)}>+ Register Device</button>
           <button className="btn" onClick={() => { setEditPlanId(null); setShowCreatePlan(true); }}>+ New Plan</button>
@@ -86,13 +90,22 @@ export default function App() {
         </div>
       </div>
 
-      <nav className="tabs">
-        {['devices', 'plans', 'resellers', 'reports', 'applications', 'commissions', 'retailer-management'].map(t => (
-          <button key={t} className={view === t ? 'tab active' : 'tab'} onClick={() => setView(t)}>
-            {{ applications: 'Customer Applications', commissions: 'Commissions', 'retailer-management': 'Retailer Management' }[t] || (t.charAt(0).toUpperCase() + t.slice(1))}
-          </button>
-        ))}
+      <nav className={`tabs admin-nav${menuOpen ? ' menu-open' : ''}`} aria-label="Admin sections">
+        <div className="nav-group"><span className="nav-group-title">Operations</span><div className="nav-group-items">
+          <button className={view === 'devices' ? 'tab active' : 'tab'} onClick={() => selectView('devices')}>Dashboard & devices</button>
+          <button className={view === 'plans' ? 'tab active' : 'tab'} onClick={() => selectView('plans')}>Payment plans</button>
+        </div></div>
+        <div className="nav-group"><span className="nav-group-title">Retailer network</span><div className="nav-group-items">
+          <button className={view === 'resellers' ? 'tab active' : 'tab'} onClick={() => selectView('resellers')}>Retailers</button>
+          <button className={view === 'retailer-management' ? 'tab active' : 'tab'} onClick={() => selectView('retailer-management')}>Retailer setup</button>
+          <button className={view === 'applications' ? 'tab active' : 'tab'} onClick={() => selectView('applications')}>Customer applications</button>
+        </div></div>
+        <div className="nav-group"><span className="nav-group-title">Finance & insights</span><div className="nav-group-items">
+          <button className={view === 'commissions' ? 'tab active' : 'tab'} onClick={() => selectView('commissions')}>Commissions & withdrawals</button>
+          <button className={view === 'reports' ? 'tab active' : 'tab'} onClick={() => selectView('reports')}>Reports</button>
+        </div></div>
       </nav>
+
 
       {view === 'devices' && (
         <>
@@ -123,7 +136,7 @@ export default function App() {
             <table>
               <thead>
                 <tr>
-                  <th>Device</th><th>Customer</th><th>Reseller</th><th>Status</th>
+                  <th>Device</th><th>Payment Code</th><th>Customer</th><th>Retailer</th><th>Status</th>
                   <th>Progress</th><th>Balance</th><th>Next Due</th><th></th>
                 </tr>
               </thead>
@@ -131,8 +144,9 @@ export default function App() {
                 {filtered.map(d => (
                   <tr key={d.imei} onClick={() => setSelected(d.imei)}>
                     <td style={{fontFamily: 'monospace', fontSize: 12}}>{d.imei}</td>
+                    <td><span className="payment-code-chip">{d.payment_code || '—'}</span></td>
                     <td>{d.customer_name || '—'}<br/><span style={{color: '#999', fontSize: 11}}>{d.customer_phone}</span></td>
-                    <td style={{fontSize: 11, color: '#666'}}>{d.reseller_email || '—'}</td>
+                    <td>{d.reseller_email ? <button type="button" className="retailer-id-link" onClick={e => { e.stopPropagation(); setFocusRetailerEmail(d.reseller_email); selectView('resellers'); }}>{d.reseller_email}</button> : '—'}</td>
                     <td><span className={`badge ${d.status}`}>{d.status}</span></td>
                     <td>{d.paid_count} / {d.total_count}</td>
                     <td>{Number(d.balance_ugx || 0).toLocaleString()}</td>
@@ -150,7 +164,7 @@ export default function App() {
                   </tr>
                 ))}
                 {filtered.length === 0 && (
-                  <tr><td colSpan="8" style={{padding: 40, textAlign: 'center', color: '#999'}}>No devices match</td></tr>
+                  <tr><td colSpan="9" style={{padding: 40, textAlign: 'center', color: '#999'}}>No devices match. Use Register Device to add the first device.</td></tr>
                 )}
               </tbody>
             </table>
@@ -185,40 +199,14 @@ export default function App() {
         </>
       )}
 
-      {view === 'resellers' && (
-        <>
-          <div className="header-actions" style={{justifyContent: 'flex-start', marginBottom: 16}}>
-            <button className="btn btn-primary" onClick={() => { setEditResellerEmail(null); setShowResellerForm(true); }}>+ Add Reseller</button>
-            <button className="btn" onClick={loadResellers}>Refresh</button>
-          </div>
-          <div className="table-wrap">
-            <table>
-              <thead><tr><th>Email</th><th>Name</th><th>Phone</th><th>Region</th><th>Devices</th><th></th></tr></thead>
-              <tbody>
-                {resellers.map(r => {
-                  const count = devices.filter(d => d.reseller_email === r.email).length;
-                  return (
-                    <tr key={r.email}>
-                      <td style={{fontFamily: 'monospace', fontSize: 12}}>{r.email}</td>
-                      <td>{r.name || '—'}</td><td>{r.phone || '—'}</td><td>{r.region || '—'}</td>
-                      <td>{count}</td>
-                      <td><button className="btn btn-sm" onClick={() => { setEditResellerEmail(r.email); setShowResellerForm(true); }}>Edit</button></td>
-                    </tr>
-                  );
-                })}
-                {resellers.length === 0 && <tr><td colSpan="6" style={{textAlign: 'center', color: '#999', padding: 40}}>No resellers yet</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+      {view === 'resellers' && <RetailerDirectory selectedEmail={focusRetailerEmail} onEdit={(email) => { setEditResellerEmail(email); setShowResellerForm(true); }} toast={toast} />}
 
       {view === 'reports' && <Reports toast={toast} />}
       {(view === 'applications' || view === 'commissions') && <AdminWorkflows view={view} toast={toast} />}
       {view === 'retailer-management' && <RetailerManagement toast={toast} />}
 
       {selected && <DeviceDetail imei={selected} onClose={() => { setSelected(null); load(); }} toast={toast} />}
-      {showAddDevice && <AddDeviceForm onClose={() => setShowAddDevice(false)} onSuccess={load} toast={toast} />}
+      {showAddDevice && <AddDeviceForm onClose={() => setShowAddDevice(false)} onSuccess={() => load(false)} toast={toast} />}
       {showCreatePlan && (
         <CreatePlanForm planId={editPlanId}
           onClose={() => { setShowCreatePlan(false); setEditPlanId(null); }}

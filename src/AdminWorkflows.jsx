@@ -12,6 +12,17 @@ const pretty = value => {
   if (Array.isArray(data)) return data.map((item, i) => `${i + 1}. ${typeof item === 'object' ? JSON.stringify(item) : item}`).join('\n');
   return Object.entries(data).map(([key, item]) => `${key.replace(/_/g, ' ')}: ${typeof item === 'object' ? JSON.stringify(item) : item ?? '—'}`).join('\n');
 };
+function GuarantorReview({ value }) {
+  const data = parseJson(value);
+  const list = Array.isArray(data) ? data : Object.values(data || {});
+  if (!list.length) return <p className="muted-workflow">No guarantors recorded.</p>;
+  return <div className="guarantor-review-list">{list.map((g, i) => <div className="guarantor-review-card" key={g.id || i}>
+    <strong>Guarantor {i + 1}</strong>
+    <span><b>Name:</b> {g.full_name || '—'}</span>
+    <span><b>Contact:</b> {g.phone || g.contact || '—'}</span>
+    <span><b>Relationship:</b> {g.relationship || '—'}</span>
+  </div>)}</div>;
+}
 
 function MediaGallery({ value, title }) {
   const data = parseJson(value);
@@ -163,8 +174,8 @@ export default function AdminWorkflows({ view, toast = () => {} }) {
             <div><h3>Customer details</h3><p><b>Phone:</b> {selected.customer_phone || '—'}</p><p><b>Email:</b> {selected.customer_email || '—'}</p><p><b>NIN:</b> {selected.nin || '—'}</p><p><b>Occupation:</b> {selected.occupation || '—'}</p><p><b>Monthly income:</b> {money(selected.monthly_income_ugx)}</p><p><b>Retailer:</b> {selected.reseller_id || '—'}</p></div>
             <div><h3>Financing and device</h3><p><b>Initial deposit:</b> {money(selected.deposit_amount_ugx)}</p><p><b>Submitted:</b> {selected.created_at || '—'}</p><pre>{pretty(selected.device_json) || 'No device details supplied.'}</pre><pre>{pretty(selected.finance_plan_json) || 'No financing plan details supplied.'}</pre></div>
           </div>
-          <h3>Guarantor details</h3><pre>{pretty(selected.guarantor_json) || 'No guarantor details supplied.'}</pre>
-          <h3>Customer and guarantor KYC images</h3><MediaGallery value={selected.kyc_media_json} title="KYC" />
+          <h3>Guarantor contacts</h3><GuarantorReview value={selected.guarantor_json} />
+          <h3>Customer KYC images</h3><MediaGallery value={selected.kyc_media_json} title="Customer KYC" />
           {selected.status === 'pending' ? <>
             <label className="field"><span>Decision reason (required for rejection)</span><textarea rows="3" value={decisionReason} onChange={e => setDecisionReason(e.target.value)} placeholder="Explain what is missing or why the application is rejected." /></label>
             <div className="modal-actions"><button className="btn" onClick={() => decide('reject')} disabled={saving}>Reject application</button><button className="btn btn-primary" onClick={() => decide('approve')} disabled={saving}>Approve application</button></div>

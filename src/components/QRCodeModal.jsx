@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Modal } from './Modal.jsx';
 import QRCode from 'qrcode';
+import { api } from '../config.js';
 
-const APK_URL = 'https://device-finance-api.whiteghostpheonix.workers.dev/download/apk/signal-dpc-v0.2.1-alpha.apk';
-const APK_CHECKSUM = '3z6gmORVcNig21inY3AP3iV8SSinu0GuIZpNLYEWM2I';
+const APK_URL = 'https://device-finance-api.whiteghostpheonix.workers.dev/download/apk/signal-dpc-v0.2.4.apk';
+const APK_CHECKSUM = '59eAWEHMKwh8GIG2kYvDpNV/0Qh+WP4APL1w6OG8NrU=';
 const COMPONENT = 'ug.co.signalelectronics.devicefinance/.SignalDeviceAdminReceiver';
 const SERVER_URL = 'https://device-finance-api.whiteghostpheonix.workers.dev';
 
-function buildPayload() {
+function buildPayload(imei, enrollmentToken) {
   return {
     'android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME': COMPONENT,
     'android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION': APK_URL,
@@ -15,7 +16,7 @@ function buildPayload() {
     'android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED': true,
     'android.app.extra.PROVISIONING_SKIP_ENCRYPTION': true,
     'android.app.extra.PROVISIONING_SKIP_USER_SETUP': true,
-    'android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE': { server_url: SERVER_URL },
+    'android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE': { server_url: SERVER_URL, imei, enrollment_token: enrollmentToken },
   };
 }
 
@@ -26,7 +27,8 @@ export function QRCodeModal({ imei, onClose }) {
   useEffect(() => {
     (async () => {
       try {
-        const url = await QRCode.toDataURL(JSON.stringify(buildPayload()), { width: 400, margin: 2 });
+        const tokenData = await api(`/api/devices/${encodeURIComponent(imei)}/enrollment-token`, { method: 'POST' });
+        const url = await QRCode.toDataURL(JSON.stringify(buildPayload(imei, tokenData.enrollment_token)), { width: 400, margin: 2 });
         setQr(url);
       } catch (e) {
         setError(e?.message || String(e));

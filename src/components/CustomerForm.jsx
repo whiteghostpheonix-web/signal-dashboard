@@ -9,10 +9,7 @@ const emptyCustomer = {
   photo_base64: null, photo_with_reseller_base64: null,
   device_photo_base64: null, id_front_base64: null, id_back_base64: null,
 };
-const emptyGuarantor = (slot) => ({
-  slot, full_name: '', phone: '', nin: '', relationship: '', address: '', occupation: '',
-  photo: null, id_front: null, existingPhoto: null, existingId: null,
-});
+const emptyGuarantor = (slot) => ({ slot, full_name: '', phone: '', relationship: '' });
 
 export function CustomerForm({ imei, onClose, onSuccess, toast }) {
   const [customer, setCustomer] = useState(emptyCustomer);
@@ -40,9 +37,8 @@ export function CustomerForm({ imei, onClose, onSuccess, toast }) {
         setGuarantors([1, 2].map(slot => {
           const e = r.guarantors?.find(x => x.slot === slot);
           return { ...emptyGuarantor(slot),
-            full_name: e?.full_name || '', phone: e?.phone || '', nin: e?.nin || '',
-            relationship: e?.relationship || '', address: e?.address || '', occupation: e?.occupation || '',
-            existingPhoto: e?.photo_url || null, existingId: e?.id_front_url || null };
+            full_name: e?.full_name || '', phone: e?.phone || '',
+            relationship: e?.relationship || '' };
         }));
       } catch (_) {}
     })();
@@ -71,10 +67,8 @@ export function CustomerForm({ imei, onClose, onSuccess, toast }) {
       for (const g of guarantors) {
         if (!g.full_name && !g.phone) continue;
         await api(`/api/customers/${imei}/guarantors`, { method: 'POST', body: JSON.stringify({
-          slot: g.slot, full_name: g.full_name, phone: g.phone, nin: g.nin,
-          relationship: g.relationship, address: g.address, occupation: g.occupation,
-          photo_base64: g.photo?.startsWith?.('data:') ? g.photo : null,
-          id_front_base64: g.id_front?.startsWith?.('data:') ? g.id_front : null,
+          slot: g.slot, full_name: g.full_name, phone: g.phone,
+          relationship: g.relationship,
         })});
       }
       toast('KYC saved', 'success');
@@ -141,23 +135,10 @@ export function CustomerForm({ imei, onClose, onSuccess, toast }) {
               <div>
                 <label className="field"><span>Full Name</span>
                   <input value={guarantors[i].full_name} onChange={e => updG(i, 'full_name', e.target.value)} /></label>
-                <label className="field"><span>Phone</span>
-                  <input value={guarantors[i].phone} onChange={e => updG(i, 'phone', e.target.value)} /></label>
-                <label className="field"><span>National ID (NIN)</span>
-                  <input value={guarantors[i].nin} onChange={e => updG(i, 'nin', e.target.value.toUpperCase())}
-                    placeholder="CM8901234567890" /></label>
-                <label className="field"><span>Relationship</span>
-                  <input value={guarantors[i].relationship} onChange={e => updG(i, 'relationship', e.target.value)} /></label>
-                <label className="field"><span>Occupation</span>
-                  <input value={guarantors[i].occupation} onChange={e => updG(i, 'occupation', e.target.value)} /></label>
-                <label className="field"><span>Address</span>
-                  <textarea rows={2} value={guarantors[i].address} onChange={e => updG(i, 'address', e.target.value)} /></label>
-              </div>
-              <div>
-                <label className="field"><span>Guarantor Photo</span>
-                  <ImageUploader value={guarantors[i].photo || guarantors[i].existingPhoto} onChange={v => updG(i, 'photo', v)} label="Guarantor" /></label>
-                <label className="field"><span>National ID Photo</span>
-                  <ImageUploader value={guarantors[i].id_front || guarantors[i].existingId} onChange={v => updG(i, 'id_front', v)} label="Guarantor ID" /></label>
+                <label className="field"><span>Contact Number</span>
+                  <input type="tel" value={guarantors[i].phone} onChange={e => updG(i, 'phone', e.target.value)} /></label>
+                <label className="field"><span>Relationship to Customer</span>
+                  <input value={guarantors[i].relationship} onChange={e => updG(i, 'relationship', e.target.value)} placeholder="e.g. Parent, spouse, sibling" /></label>
               </div>
             </div>
           </div>

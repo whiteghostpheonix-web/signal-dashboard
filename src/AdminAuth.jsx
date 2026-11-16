@@ -141,7 +141,7 @@ export default function AdminAuth({ children }) {
 
   return (
     <>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 10, padding: '8px 20px' }}>
+      <div className="admin-account-bar">
         <span>{admin.email}</span>
         <button className="btn btn-sm" onClick={async () => {
           setError('');
@@ -152,14 +152,14 @@ export default function AdminAuth({ children }) {
       {error && <div className="error" role="alert" style={{ margin: '0 20px' }}>{error}</div>}
       {message && <div role="status" style={{ margin: '0 20px' }}>{message}</div>}
       {showAdmins && (
-        <section className="card" style={{ margin: '12px 20px', padding: 20 }}>
+        <section className="admin-management-panel">
           <h2>Authorized admins</h2>
           <form onSubmit={addAdmin} className="form-grid">
             <label className="field"><span>Name</span><input value={newAdminName} onChange={(e) => setNewAdminName(e.target.value)} /></label>
             <label className="field"><span>Email *</span><input type="email" required value={newAdminEmail} onChange={(e) => setNewAdminEmail(e.target.value)} /></label>
             <button type="submit" className="btn btn-primary">Add admin</button>
           </form>
-          <ul>{admins.map((item) => <li key={item.id}>{item.display_name} — {item.email} {item.active ? '' : '(disabled)'}</li>)}</ul>
+          <ul className="admin-user-list">{admins.map((item) => <li key={item.id}><b>{item.display_name || 'Admin'}</b><span>{item.email} · {item.active ? 'Active' : 'Disabled'}</span></li>)}</ul>
         </section>
       )}
       {children}

@@ -77,11 +77,11 @@ export function CreatePlanForm({ onClose, onSuccess, toast }) {
               onChange={e => setPeriodCount(e.target.value)} required /></label>
         </div>
 
-        <div className="summary" style={{background: '#f0f6ff', padding: 14}}>
+        <div className="summary plan-form-section">
           <div><strong>{periodCount} {unit}s × {Number(amountPerPeriod).toLocaleString()} UGX = {Number(installmentsTotal).toLocaleString()} UGX</strong></div>
         </div>
 
-        <div className="card" style={{background: '#fff8e1', marginTop: 12, marginBottom: 16, padding: 16}}>
+        <div className="card plan-form-section deposit">
           <label style={{display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: hasDeposit ? 12 : 0}}>
             <input type="checkbox" checked={hasDeposit} onChange={e => setHasDeposit(e.target.checked)} />
             <strong>Also require initial deposit</strong>
@@ -100,7 +100,7 @@ export function CreatePlanForm({ onClose, onSuccess, toast }) {
           )}
         </div>
 
-        <div className="summary" style={{background: '#e7f5ff', border: '2px solid #0F62FE', padding: 16}}>
+        <div className="summary plan-form-total">
           <div style={{fontSize: 18}}><strong>Grand Total: UGX {Number(grandTotal).toLocaleString()}</strong></div>
         </div>
 
